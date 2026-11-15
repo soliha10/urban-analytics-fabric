@@ -1,0 +1,161 @@
+{
+  "name": "pl_ingest_taxi",
+  "properties": {
+    "parameters": {
+      "months": {
+        "type": "array",
+        "defaultValue": [
+          "2024-01", "2024-02", "2024-03"
+        ]
+      }
+    },
+    "activities": [
+      {
+        "name": "Copy taxi zone lookup",
+        "type": "Copy",
+        "typeProperties": {
+          "source": {
+            "type": "BinarySource",
+            "storeSettings": { "type": "HttpReadSettings", "requestMethod": "GET" },
+            "formatSettings": { "type": "BinaryReadSettings" },
+            "datasetSettings": {
+              "type": "Binary",
+              "typeProperties": {
+                "location": { "type": "HttpServerLocation", "relativeUrl": "misc/taxi_zone_lookup.csv" }
+              },
+              "externalReferences": { "connection": "<HTTP_CONNECTION_ID>" }
+            }
+          },
+          "sink": {
+            "type": "BinarySink",
+            "storeSettings": { "type": "LakehouseWriteSettings" },
+            "datasetSettings": {
+              "type": "Binary",
+              "typeProperties": {
+                "location": {
+                  "type": "LakehouseLocation",
+                  "folderPath": "taxi/reference",
+                  "fileName": "taxi_zone_lookup.csv"
+                }
+              },
+              "linkedService": {
+                "name": "lh_bronze",
+                "properties": {
+                  "type": "Lakehouse",
+                  "typeProperties": {
+                    "workspaceId": "<WORKSPACE_ID>",
+                    "artifactId": "<LH_BRONZE_ID>",
+                    "rootFolder": "Files"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      {
+        "name": "For each taxi month",
+        "type": "ForEach",
+        "typeProperties": {
+          "items": { "value": "@pipeline().parameters.months", "type": "Expression" },
+          "isSequential": false,
+          "batchCount": 4,
+          "activities": [
+            {
+              "name": "Check month file exists",
+              "type": "GetMetadata",
+              "typeProperties": {
+                "fieldList": ["exists"],
+                "storeSettings": { "type": "LakehouseReadSettings", "recursive": false },
+                "formatSettings": { "type": "BinaryReadSettings" },
+                "datasetSettings": {
+                  "type": "Binary",
+                  "typeProperties": {
+                    "location": {
+                      "type": "LakehouseLocation",
+                      "folderPath": "taxi/yellow",
+                      "fileName": { "value": "@concat('yellow_tripdata_', item(), '.parquet')", "type": "Expression" }
+                    }
+                  },
+                  "linkedService": {
+                    "name": "lh_bronze",
+                    "properties": {
+                      "type": "Lakehouse",
+                      "typeProperties": {
+                        "workspaceId": "<WORKSPACE_ID>",
+                        "artifactId": "<LH_BRONZE_ID>",
+                        "rootFolder": "Files"
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "name": "If month file missing",
+              "type": "IfCondition",
+              "dependsOn": [
+                { "activity": "Check month file exists", "dependencyConditions": ["Succeeded"] }
+              ],
+              "typeProperties": {
+                "expression": {
+                  "value": "@not(activity('Check month file exists').output.exists)",
+                  "type": "Expression"
+                },
+                "ifTrueActivities": [
+                  {
+                    "name": "Copy taxi month",
+                    "type": "Copy",
+                    "policy": { "retry": 2, "retryIntervalInSeconds": 60, "timeout": "0.02:00:00" },
+                    "typeProperties": {
+                      "source": {
+                        "type": "BinarySource",
+                        "storeSettings": { "type": "HttpReadSettings", "requestMethod": "GET" },
+                        "formatSettings": { "type": "BinaryReadSettings" },
+                        "datasetSettings": {
+                          "type": "Binary",
+                          "typeProperties": {
+                            "location": {
+                              "type": "HttpServerLocation",
+                              "relativeUrl": { "value": "@concat('trip-data/yellow_tripdata_', item(), '.parquet')", "type": "Expression" }
+                            }
+                          },
+                          "externalReferences": { "connection": "<HTTP_CONNECTION_ID>" }
+                        }
+                      },
+                      "sink": {
+                        "type": "BinarySink",
+                        "storeSettings": { "type": "LakehouseWriteSettings" },
+                        "datasetSettings": {
+                          "type": "Binary",
+                          "typeProperties": {
+                            "location": {
+                              "type": "LakehouseLocation",
+                              "folderPath": "taxi/yellow",
+                              "fileName": { "value": "@concat('yellow_tripdata_', item(), '.parquet')", "type": "Expression" }
+                            }
+                          },
+                          "linkedService": {
+                            "name": "lh_bronze",
+                            "properties": {
+                              "type": "Lakehouse",
+                              "typeProperties": {
+                                "workspaceId": "<WORKSPACE_ID>",
+                                "artifactId": "<LH_BRONZE_ID>",
+                                "rootFolder": "Files"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
