@@ -1,0 +1,13 @@
+Role: BoroughAnalyst
+Table: DimBorough
+Filter:
+DimBorough[borough_key]
+    IN CALCULATETABLE (
+        VALUES ( SecurityUserBorough[borough_key] ),
+        SecurityUserBorough[user_email] = USERPRINCIPALNAME ()
+    )
+
+Role: CityManager
+Table: DimBorough
+Filter:
+TRUE ()
