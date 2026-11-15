@@ -1,0 +1,94 @@
+{
+  "name": "pl_master",
+  "properties": {
+    "activities": [
+      {
+        "name": "Ingest taxi files",
+        "type": "ExecutePipeline",
+        "typeProperties": {
+          "pipeline": { "referenceName": "<PL_INGEST_TAXI_ID>", "type": "PipelineReference" },
+          "waitOnCompletion": true
+        }
+      },
+      {
+        "name": "Refresh OpenAQ",
+        "type": "RefreshDataflow",
+        "policy": { "retry": 1, "retryIntervalInSeconds": 300 },
+        "typeProperties": { "workspaceId": "<WORKSPACE_ID>", "dataflowId": "<DF_OPENAQ_ID>", "notifyOption": "NoNotification", "dataflowType": "DataflowFabric", "executeMashupQueriesOnly": true }
+      },
+      {
+        "name": "Refresh World Bank GDP",
+        "type": "RefreshDataflow",
+        "policy": { "retry": 1, "retryIntervalInSeconds": 300 },
+        "typeProperties": { "workspaceId": "<WORKSPACE_ID>", "dataflowId": "<DF_WORLDBANK_GDP_ID>", "notifyOption": "NoNotification", "dataflowType": "DataflowFabric", "executeMashupQueriesOnly": true }
+      },
+      {
+        "name": "Refresh ECB FX",
+        "type": "RefreshDataflow",
+        "policy": { "retry": 1, "retryIntervalInSeconds": 300 },
+        "typeProperties": { "workspaceId": "<WORKSPACE_ID>", "dataflowId": "<DF_ECB_FX_ID>", "notifyOption": "NoNotification", "dataflowType": "DataflowFabric", "executeMashupQueriesOnly": true }
+      },
+      {
+        "name": "Silver taxi trips",
+        "type": "TridentNotebook",
+        "dependsOn": [{ "activity": "Ingest taxi files", "dependencyConditions": ["Succeeded"] }],
+        "typeProperties": { "workspaceId": "<WORKSPACE_ID>", "notebookId": "<NB_SILVER_TAXI_TRIPS_ID>" }
+      },
+      {
+        "name": "Silver taxi zones",
+        "type": "TridentNotebook",
+        "dependsOn": [{ "activity": "Ingest taxi files", "dependencyConditions": ["Succeeded"] }],
+        "typeProperties": { "workspaceId": "<WORKSPACE_ID>", "notebookId": "<NB_SILVER_TAXI_ZONES_ID>" }
+      },
+      {
+        "name": "Silver air quality",
+        "type": "TridentNotebook",
+        "dependsOn": [{ "activity": "Refresh OpenAQ", "dependencyConditions": ["Succeeded"] }],
+        "typeProperties": { "workspaceId": "<WORKSPACE_ID>", "notebookId": "<NB_SILVER_AIR_QUALITY_ID>" }
+      },
+      {
+        "name": "Silver economy",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          { "activity": "Refresh World Bank GDP", "dependencyConditions": ["Succeeded"] },
+          { "activity": "Refresh ECB FX", "dependencyConditions": ["Succeeded"] }
+        ],
+        "typeProperties": { "workspaceId": "<WORKSPACE_ID>", "notebookId": "<NB_SILVER_ECONOMY_ID>" }
+      },
+      {
+        "name": "Gold dimensions",
+        "type": "TridentNotebook",
+        "dependsOn": [
+          { "activity": "Silver taxi trips", "dependencyConditions": ["Succeeded"] },
+          { "activity": "Silver taxi zones", "dependencyConditions": ["Succeeded"] },
+          { "activity": "Silver air quality", "dependencyConditions": ["Succeeded"] },
+          { "activity": "Silver economy", "dependencyConditions": ["Succeeded"] }
+        ],
+        "typeProperties": { "workspaceId": "<WORKSPACE_ID>", "notebookId": "<NB_GOLD_DIMENSIONS_ID>" }
+      },
+      {
+        "name": "Gold facts",
+        "type": "TridentNotebook",
+        "dependsOn": [{ "activity": "Gold dimensions", "dependencyConditions": ["Succeeded"] }],
+        "typeProperties": { "workspaceId": "<WORKSPACE_ID>", "notebookId": "<NB_GOLD_FACTS_ID>" }
+      },
+      {
+        "name": "Load warehouse star schema",
+        "type": "SqlServerStoredProcedure",
+        "dependsOn": [{ "activity": "Gold facts", "dependencyConditions": ["Succeeded"] }],
+        "typeProperties": { "storedProcedureName": "[gold].[usp_load_star_schema]" },
+        "linkedService": {
+          "name": "wh_urban_analytics",
+          "properties": {
+            "type": "DataWarehouse",
+            "typeProperties": {
+              "workspaceId": "<WORKSPACE_ID>",
+              "artifactId": "<WAREHOUSE_ID>",
+              "endpoint": "<WAREHOUSE_SQL_ENDPOINT>"
+            }
+          }
+        }
+      }
+    ]
+  }
+}
