@@ -27,14 +27,23 @@
 `DimDate` ni date table qiladi va modelni refresh qiladi. Qo'lda qilish kerak bo'lsa — `02_powerbi_measures.dax`
 dagi har bir measure'ni `FactTaxiDaily` jadvalida **New measure** orqali qo'shing.
 
-## 4. Hisobot sahifalari
+## 4. Hisobot sahifalari (avtomatik)
+`nb_report_builder` notebookini (`07_nb_report_builder.py`) ishga tushiring: u Fabric REST API orqali hisobot ta'rifini
+(PBIR) oladi, `definition/pages/` ni quyidagi 4 sahifa bilan almashtiradi va `updateDefinition` bilan qayta yozadi.
+Hisobot `rpt_urban_analytics` nomi bilan oldindan yaratilgan bo'lishi kerak (bo'sh hisobot ham bo'ladi).
+F2 capacity bir vaqtda bitta Spark sessiyasini ko'taradi — boshqa notebook sessiyalarini avval to'xtating.
+
 | Sahifa | Vizuallar |
 |---|---|
-| **Mobility** | Card: `Trips`, `Avg Daily Trips`, `Avg Fare USD`; Line: `Trips` by `calendar_date`; Bar: `Trips` by `DimZone[zone_name]` (Top N 10); Matrix: `day_name` × `FactMobilityAirHourly[hour_of_day]` |
-| **Air Quality** | Slicer: `FactAirQualityDaily[parameter]`; Line: `Pollutant Avg` by date, legend `borough`; Map/Bar: `Pollutant Avg` by `borough`; Card: `Pollutant Peak` |
-| **Mobility vs Air** | Slicer: `parameter`; Line + clustered column: `Trips` (column) va `Pollutant Avg` (line) by date; Scatter: X `Trips`, Y `Pollutant Avg`, details `calendar_date`; Card: `Trips vs Pollutant Correlation` |
-| **Economic Impact** | Line: `Revenue per Trip USD` va `Revenue per Trip EUR` by month; Line: `USD per EUR`; Card: `FX Impact EUR`; Column: `USA GDP USD` by `year_number`; Card: `Trips YoY %` |
+| **Mobility** | Card: `Trips`, `Avg Daily Trips`, `Avg Fare USD`, `Revenue per Trip USD`; Line: `Trips` by `calendar_date`; Bar: `Trips` by `DimZone[borough]`; Matrix: `day_name` × `time_of_day` (Sum `trip_count`); Bar: busiest `zone_name` |
+| **Air Quality** | Slicer (dropdown): `FactAirQualityDaily[parameter]`; Card: `Pollutant Avg`, `Pollutant Peak`, `NO2 Avg`; Line: `Pollutant Avg` by date, legend `borough`; Bar: `Pollutant Avg` by `borough`; Matrix: `borough` × `time_of_day` (Avg `no2_avg`) |
+| **Mobility vs Air** | Slicer: `parameter`; Card: `Trips vs Pollutant Correlation`, `Trips`, `Pollutant Avg`; Combo: `Trips` (column) + `Pollutant Avg` (line) by date; Scatter: X `Trips`, Y `Pollutant Avg`, details `calendar_date`; Matrix: `time_of_day` × trips, PM2.5, NO2, O3 |
+| **Economic Impact** | Card: `Revenue USD`, `Revenue EUR`, `USD per EUR`, `FX Impact EUR`; Line: `Revenue per Trip USD/EUR` by `month_number`; Line: `USD per EUR` by date; Column: `Revenue USD` by `borough`; Column: `gdp_usd` by `year_number` (filter `country_code = USA`) |
 
-## 5. Publish
+## 5. Publish to web haqida
+Publish to web Direct Lake modeliga ulangan hisobotni qabul qilmaydi ("report is not eligible"). Shuning uchun ochiq
+ko'rinish sifatida `08_docs/screenshots/` dagi skrinshotlar README'ga qo'yilgan; jonli hisobot workspace ichida.
+
+## 6. Saqlash
 Hisobotni `rpt_urban_analytics` nomi bilan workspace'ga saqlang. Direct Lake rejimida
 `pl_master` warehouse'ni yangilagach hisobot avtomatik yangi ma'lumotni ko'rsatadi.

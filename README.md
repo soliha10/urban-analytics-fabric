@@ -8,6 +8,18 @@ Sources ──► Bronze (lh_bronze) ──► Silver (lh_silver) ──► Gold
           Pipeline + Dataflow Gen2     PySpark notebooks      PySpark notebooks     T-SQL procedures/views      Direct Lake
 ```
 
+## Power BI report (`rpt_urban_analytics`)
+Direct Lake report on the warehouse star schema, built by `07_analytics/07_nb_report_builder.py`.
+
+| Mobility | Air Quality |
+|---|---|
+| ![Mobility](08_docs/screenshots/01_mobility.png) | ![Air Quality](08_docs/screenshots/02_air_quality.png) |
+| **Mobility vs Air** | **Economic Impact** |
+| ![Mobility vs Air](08_docs/screenshots/03_mobility_vs_air.png) | ![Economic Impact](08_docs/screenshots/04_economic_impact.png) |
+
+Key results (Jan–Mar 2024): 9.17M trips, 100.79K trips per day, revenue per trip $27.48,
+daily trips vs pollutant correlation 0.37, revenue $252.02M = €232.10M (FX impact €26.85K).
+
 ## Analytical questions → where answered
 | Question | Answer |
 |---|---|
@@ -48,5 +60,5 @@ data_coursework/
 - [x] Lakehouses Bronze / Silver / Gold with three source domains
 - [x] Pipelines (`pl_ingest_taxi`, `pl_master`) and Dataflows Gen2 (`df_openaq`, `df_worldbank_gdp`, `df_ecb_fx`)
 - [x] Warehouse star schema + analytics views
-- [x] Visualizations: `nb_insights` + Power BI model/measures/report layout
+- [x] Visualizations: `nb_insights` + 4-page Power BI report (`nb_semantic_model`, `nb_report_builder`)
 - [x] Governance: RLS, refresh schedule, lineage, data quality, documentation (`08_docs`)
