@@ -32,15 +32,14 @@ daily trips vs pollutant correlation 0.37, revenue $252.02M = €232.10M (FX imp
 | Revenue per trip USD vs EUR, FX effect | `gold.vw_MonthlyRevenueUsdEur`, `[FX Impact EUR]` |
 | Growth vs environment over years | `gold.vw_YearlyMobilityEconomyEnvironment` |
 
-## Qayerdan boshlash
-1. **`00_STEP_BY_STEP.md`** — 0 dan oxirigacha yagona yo'l xaritasi (fayl yozish tartibi + Fabric qadamlari + tekshiruvlar).
-2. **`08_docs/04_project_overview.md`** — loyiha maqsadi, kutilgan natijalar, himoya uchun cheklovlar.
+## Where to start
+1. **`08_docs/04_project_overview.md`** — goals, results and limitations.
+2. **`01_setup/01_workspace_setup.md`** — workspace, items and connections; each folder has its own `*_guide.md`.
 
 ## Project structure
 ```
 data_coursework/
 ├── README.md
-├── 00_STEP_BY_STEP.md                   full walkthrough with checkpoints
 ├── 01_setup/                            workspace, items, connections
 ├── 02_bronze/                           pl_ingest_taxi (JSON) + 3 Dataflow Gen2 (M)
 ├── 03_silver/                           nb_config, nb_common, 4 silver notebooks
