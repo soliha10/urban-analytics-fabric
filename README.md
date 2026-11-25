@@ -40,7 +40,6 @@ daily trips vs pollutant correlation 0.37, revenue $252.02M = €232.10M (FX imp
 ```
 data_coursework/
 ├── README.md
-├── 00_PROMPT.md                         task definition
 ├── 00_STEP_BY_STEP.md                   full walkthrough with checkpoints
 ├── 01_setup/                            workspace, items, connections
 ├── 02_bronze/                           pl_ingest_taxi (JSON) + 3 Dataflow Gen2 (M)
