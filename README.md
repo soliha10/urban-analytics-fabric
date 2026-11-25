@@ -9,7 +9,11 @@ Sources ──► Bronze (lh_bronze) ──► Silver (lh_silver) ──► Gold
 ```
 
 ## Power BI report (`rpt_urban_analytics`)
+**Live public report:** https://app.fabric.microsoft.com/view?r=eyJrIjoiMWI0MzI3NjQtYjkwOC00NWIxLWEzNDAtYWFiZWY0ZjVlODljIiwidCI6ImNkNjgxMGVmLWFiYzYtNGZjMS1hYjA1LWNmYzhhMTliNzJjNSIsImMiOjEwfQ%3D%3D
+
 Direct Lake report on the warehouse star schema, built by `07_analytics/07_nb_report_builder.py`.
+The public link serves `rpt_urban_analytics_public` — a clone bound to an Import-mode copy of the model
+(`07_analytics/08_nb_public_model.py`), because Publish to web does not support Direct Lake.
 
 | Mobility | Air Quality |
 |---|---|

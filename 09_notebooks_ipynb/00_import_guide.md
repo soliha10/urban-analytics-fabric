@@ -5,7 +5,7 @@ Kod bir xil — qo'lda cell-ma-cell ko'chirish o'rniga shu yo'lni ishlatsangiz b
 
 ## Import
 1. Workspace `ws_urban_analytics` → **Import → Notebook → From this computer**.
-2. Shu papkadagi **11 ta `.ipynb` faylning hammasini birdaniga** tanlang → **Upload**.
+2. Shu papkadagi **12 ta `.ipynb` faylning hammasini birdaniga** tanlang → **Upload**.
 3. Notebook nomlari fayl nomidan olinadi (`nb_config`, `nb_common`, ...) — **nomini o'zgartirmang**,
    `%run nb_config` / `%run nb_common` shu nomlarga tayanadi.
 
