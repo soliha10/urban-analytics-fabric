@@ -5,22 +5,26 @@
 |---|---|---|
 | Data engineer | Contributor | Build and run pipelines, dataflows, notebooks |
 | Data owner | Admin | Workspace settings, permissions, capacity |
-| City manager | Viewer + `CityManager` RLS role | Full report |
-| Borough analyst | Viewer + `BoroughAnalyst` RLS role | Own borough only |
+| City manager | Viewer (+ `CityManager` RLS role, planned) | Full report |
+| Borough analyst | Viewer (+ `BoroughAnalyst` RLS role, planned) | Own borough only |
+| Public | Publish to web link | `rpt_urban_analytics_public` only, read-only |
 
 - Principle of least privilege: consumers never get Member/Contributor (these bypass RLS).
 - Access is granted to Entra ID **groups**, not individuals.
 - OpenAQ API key is stored only as a Dataflow parameter, never in notebooks or reports.
 
-## 2. Row-Level Security
-Implemented in the semantic model on `DimBorough`, driven by `gold.SecurityUserBorough`
-(see `07_analytics/05_rls_guide.md`). Adding a user = inserting one row, no model change.
+## 2. Row-Level Security (optional in scope — designed, not activated)
+Designed on `DimBorough`, driven by `gold.SecurityUserBorough`: role definitions in `07_analytics/04_rls_roles.dax`,
+steps in `07_analytics/05_rls_guide.md`, mapping table in `05_warehouse/07_create_security.sql`.
+Adding a user = inserting one row, no model change. The roles are not created in the deployed model because the
+project scope marks RLS as optional and Publish to web does not allow models with RLS.
 
 ## 3. Data classification and labels
 | Item | Sensitivity label | Reason |
 |---|---|---|
 | Lakehouses, Warehouse | General | Open public datasets, no PII |
 | Semantic model, Report | General | Aggregated data only |
+| Public report (Publish to web) | Public | Open datasets only; the security table holds only a placeholder email |
 
 Endorsement: `wh_urban_analytics` and `sm_urban_analytics` → **Certified** after review; others → **Promoted**.
 

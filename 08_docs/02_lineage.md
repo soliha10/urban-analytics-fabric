@@ -38,6 +38,7 @@ flowchart LR
 
     WH[(wh_urban_analytics<br/>gold star schema + views)]
     PBI[Power BI<br/>sm_urban_analytics / rpt_urban_analytics]
+    PUB[Public report<br/>sm_urban_analytics_import / rpt_urban_analytics_public]
 
     TLC -- pl_ingest_taxi --> BT & BZ
     OAQ -- df_openaq --> BA
@@ -59,10 +60,14 @@ flowchart LR
 
     Gold -- usp_load_star_schema --> WH
     WH -- Direct Lake --> PBI
+    WH -- Import refresh --> PUB
 ```
 
+`rpt_urban_analytics_public` is a clone of the main report bound to an Import-mode copy of the model, because
+Publish to web does not accept Direct Lake models (`07_analytics/08_nb_public_model.py`).
+
 ## Orchestration
-`pl_master` (daily 03:00 UTC+05:00) runs every arrow above in dependency order — see `06_orchestration/02_orchestration_guide.md`.
+`pl_master` (daily 03:00 UTC+05:00, schedule configured; switched off while the capacity is paused) runs every arrow above in dependency order — see `06_orchestration/02_orchestration_guide.md`.
 
 ## Purview lineage
 Fabric captures item-level lineage automatically. Open the workspace → **Lineage view** to see

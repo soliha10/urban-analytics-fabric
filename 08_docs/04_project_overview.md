@@ -55,7 +55,8 @@ Internet ──► BRONZE ──► SILVER ──► GOLD ──► WAREHOUSE �
 
 ### Power BI — "qaror qabul qiluvchi ko'radigan joy"
 - 4 sahifali dashboard: Mobility, Air Quality, Mobility vs Air, Economic Impact.
-- RLS bilan har bir analitik faqat o'z borough'ini ko'radi.
+- Ochiq havola (login shart emas): https://app.fabric.microsoft.com/view?r=eyJrIjoiMWI0MzI3NjQtYjkwOC00NWIxLWEzNDAtYWFiZWY0ZjVlODljIiwidCI6ImNkNjgxMGVmLWFiYzYtNGZjMS1hYjA1LWNmYzhhMTliNzJjNSIsImMiOjEwfQ%3D%3D
+- RLS (ixtiyoriy) loyihalangan: `07_analytics/04_rls_roles.dax`, lekin modelda yoqilmagan.
 
 ## 3. Yakunda qo'lda nima bo'lishi kerak
 
@@ -64,8 +65,8 @@ Internet ──► BRONZE ──► SILVER ──► GOLD ──► WAREHOUSE �
 | 1 | Lakehouse'lar | `lh_bronze`, `lh_silver`, `lh_gold` to'lgan, uchala soha ma'lumoti bor |
 | 2 | Avtomatik ingestion | `pl_ingest_taxi`, 3 ta Dataflow Gen2 va `pl_master` Monitor hub'da yashil (Succeeded) |
 | 3 | Warehouse | `wh_urban_analytics.gold` da 8 ta jadval va 5 ta view; `06_run_load_and_validate.sql` qatorlar sonini ko'rsatadi |
-| 4 | Vizualizatsiya | `nb_insights` grafiklari va (ixtiyoriy) Power BI hisoboti |
-| 5 | Governance | Kunlik 03:00 schedule, Lineage view'da to'liq zanjir, RLS rollari |
+| 4 | Vizualizatsiya | `nb_insights` grafiklari va 4 sahifali Power BI hisoboti (ochiq havola bilan) |
+| 5 | Governance | Kunlik 03:00 schedule, Lineage view'da to'liq zanjir; RLS (ixtiyoriy) loyihalangan |
 | 6 | Hujjatlar | `08_docs/`: data dictionary, lineage diagramma, governance siyosati, shu overview |
 
 **Muvaffaqiyat mezoni:** `pl_master` ni bir marta bosganda butun zanjir
@@ -74,7 +75,19 @@ dashboard esa yangi ma'lumotni ko'rsatadi.
 
 ## 4. To'rt savol va javob qanday ko'rinishda bo'ladi
 
-Aniq raqamlar haqiqiy ma'lumot yuklangandan keyin chiqadi. Quyida natijaning shakli va uni o'qish usuli.
+Quyida natijaning shakli, uni o'qish usuli va Fabric'da olingan haqiqiy raqamlar (2024-01…03).
+
+| Ko'rsatkich | Qiymat |
+|---|---|
+| Safarlar (Silver, tozalangandan keyin) | 9,172,303 — kuniga o'rtacha 100.79K |
+| O'rtacha narx / safar boshiga daromad | $18.68 / $27.48 |
+| Kunlik korrelyatsiya, trips ↔ NO2 / O3 / PM2.5 | 0.166 / 0.126 / 0.124 |
+| Eng kuchli soatlik segment | Bronx `evening_rush` O3 0.288, Manhattan `morning_rush` NO2 0.223 |
+| Safar boshiga daromad USD / EUR (kurs) | Yanvar 27.31 / 25.04 (1.091), Fevral 27.21 / 25.20 (1.080), Mart 27.83 / 25.62 (1.086) |
+| Jami daromad | $252.02M = €232.10M, FX impact €26.85K |
+
+Power BI'dagi `Trips vs Pollutant Correlation` kartasi slicer tanlanmaganda 0.37 ko'rsatadi — bu barcha
+ifloslantiruvchilar o'rtachasi bo'yicha; har bir ifloslantiruvchi uchun aniq qiymatni slicer orqali tanlab ko'ring.
 
 ### 1) Kunlik qatnov havo sifati bilan qanday bog'liq?
 - **Qayerda:** `gold.vw_MobilityAirCorrelation`, `analysis_level = 'daily_city'`.

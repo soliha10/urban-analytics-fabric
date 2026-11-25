@@ -1,5 +1,24 @@
 # Data Dictionary
 
+## Row counts (Fabric run, Jan–Mar 2024)
+| Layer | Table | Rows |
+|---|---|---|
+| Silver | silver_taxi_trips | 9,172,303 |
+| Silver | silver_taxi_zones | 265 |
+| Silver | silver_air_quality | 47,065 |
+| Silver | silver_fx_rates | 3,039 |
+| Silver | silver_gdp | 234 |
+| Gold | dim_date | 91 |
+| Gold | dim_borough | 7 |
+| Gold | dim_zone | 265 |
+| Gold | dim_fx | 91 |
+| Gold | dim_gdp | 234 |
+| Gold | fact_taxi_daily | 20,272 |
+| Gold | fact_air_quality_daily | 1,001 |
+| Gold | fact_mobility_air_hourly | 13,049 |
+
+Silver total: 9,222,906 rows. Gold total: 35,010 rows (the same rows are loaded into the warehouse `gold` schema).
+
 ## Bronze — `lh_bronze`
 
 ### Files/taxi/yellow/yellow_tripdata_YYYY-MM.parquet
