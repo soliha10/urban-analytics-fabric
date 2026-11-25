@@ -16,6 +16,7 @@ NOTEBOOK_SOURCES = {
     "nb_gold_facts": "04_gold/02_nb_gold_facts.py",
     "nb_insights": "07_analytics/01_nb_insights.py",
     "nb_semantic_model": "07_analytics/06_nb_semantic_model.py",
+    "nb_report_builder": "07_analytics/07_nb_report_builder.py",
 }
 
 FABRIC_METADATA = {
