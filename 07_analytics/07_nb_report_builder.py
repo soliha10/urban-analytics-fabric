@@ -57,8 +57,24 @@ def visual(name, visual_type, box, title, **roles):
     }
 
 
+def with_objects(container, **objects):
+    settings = {name: [{"properties": {key: literal(value) for key, value in values.items()}}] for name, values in objects.items()}
+    return {**container, "visual": {**container["visual"], "objects": settings}}
+
+
+def sorted_descending(container, projection_item):
+    sort = {"sort": [{"field": projection_item["field"], "direction": "Descending"}], "isDefaultSort": False}
+    return {**container, "visual": {**container["visual"], "query": {**container["visual"]["query"], "sortDefinition": sort}}}
+
+
+def ranked_bar(name, box, title, category, value):
+    bar = visual(name, "clusteredBarChart", box, title, Category=[category], Y=[value])
+    return sorted_descending(bar, value)
+
+
 def card(name, slot, measure_name):
-    return visual(name, "card", (20 + slot * 315, 20, 300, 110), measure_name, Values=[measure(measure_name)])
+    tile = visual(name, "card", (20 + slot * 315, 20, 300, 110), measure_name, Values=[measure(measure_name)])
+    return with_objects(tile, categoryLabels={"show": False})
 
 
 def card_row(prefix, measure_names, first_slot=0):
@@ -66,7 +82,8 @@ def card_row(prefix, measure_names, first_slot=0):
 
 
 def parameter_slicer(name):
-    return visual(name, "slicer", (20, 20, 300, 110), "Pollutant", Values=[column("FactAirQualityDaily", "parameter")])
+    slicer = visual(name, "slicer", (20, 20, 300, 110), "Pollutant", Values=[column("FactAirQualityDaily", "parameter")])
+    return with_objects(slicer, data={"mode": "Dropdown"})
 
 
 def country_filter(table, column_name, value):
@@ -87,13 +104,11 @@ def mobility_page():
     return card_row("mobility", ["Trips", "Avg Daily Trips", "Avg Fare USD", "Revenue per Trip USD"]) + [
         visual("mobility_trend", "lineChart", (20, 150, 760, 270), "Daily Trips",
                Category=[column("DimDate", "calendar_date")], Y=[measure("Trips")]),
-        visual("mobility_borough", "clusteredBarChart", (800, 150, 460, 270), "Trips by Borough",
-               Category=[column("DimZone", "borough")], Y=[measure("Trips")]),
+        ranked_bar("mobility_borough", (800, 150, 460, 270), "Trips by Borough", column("DimZone", "borough"), measure("Trips")),
         visual("mobility_rhythm", "pivotTable", (20, 440, 620, 260), "Trips by Day and Time of Day",
                Rows=[column("DimDate", "day_name")], Columns=[column("FactMobilityAirHourly", "time_of_day")],
                Values=[total("FactMobilityAirHourly", "trip_count")]),
-        visual("mobility_zones", "clusteredBarChart", (660, 440, 600, 260), "Trips by Zone",
-               Category=[column("DimZone", "zone_name")], Y=[measure("Trips")]),
+        ranked_bar("mobility_zones", (660, 440, 600, 260), "Busiest Pickup Zones", column("DimZone", "zone_name"), measure("Trips")),
     ]
 
 
@@ -102,8 +117,8 @@ def air_quality_page():
         visual("air_trend", "lineChart", (20, 150, 760, 270), "Daily Pollutant Average by Borough",
                Category=[column("DimDate", "calendar_date")], Series=[column("DimBorough", "borough")],
                Y=[measure("Pollutant Avg")]),
-        visual("air_borough", "clusteredBarChart", (800, 150, 460, 270), "Pollutant Average by Borough",
-               Category=[column("DimBorough", "borough")], Y=[measure("Pollutant Avg")]),
+        ranked_bar("air_borough", (800, 150, 460, 270), "Pollutant Average by Borough",
+                   column("DimBorough", "borough"), measure("Pollutant Avg")),
         visual("air_rhythm", "pivotTable", (20, 440, 1240, 260), "Hourly NO2 (ppb) by Borough and Time of Day",
                Rows=[column("DimBorough", "borough")], Columns=[column("FactMobilityAirHourly", "time_of_day")],
                Values=[total("FactMobilityAirHourly", "no2_avg", AVERAGE)]),
@@ -171,21 +186,30 @@ def report_parts(current_parts):
 
 
 # %%
-def await_operation(operation_id):
+def await_operation(response):
+    operation_id = response.headers["x-ms-operation-id"]
     while (state := client.get(f"v1/operations/{operation_id}").json())["status"] in ("NotStarted", "Running"):
         time.sleep(3)
     if state["status"] != "Succeeded":
         raise RuntimeError(state)
-    result = client.get(f"v1/operations/{operation_id}/result")
-    return result.json() if result.ok and result.content else {}
+    return operation_id
 
 
-def call_report_api(report_id, action, body=None):
-    response = client.post(f"v1/workspaces/{workspace_id}/reports/{report_id}/{action}", json=body)
+def report_api(report_id, action, body=None):
+    return client.post(f"v1/workspaces/{workspace_id}/reports/{report_id}/{action}", json=body)
+
+
+def get_report_parts(report_id):
+    response = report_api(report_id, "getDefinition?format=PBIR")
     if response.status_code == 202:
-        return await_operation(response.headers["x-ms-operation-id"])
-    response.raise_for_status()
-    return response.json() if response.content else {}
+        response = client.get(f"v1/operations/{await_operation(response)}/result")
+    return response.json()["definition"]["parts"]
+
+
+def update_report_parts(report_id, parts):
+    response = report_api(report_id, "updateDefinition", {"definition": {"parts": parts}})
+    if response.status_code == 202:
+        await_operation(response)
 
 
 def find_report_id():
@@ -195,6 +219,5 @@ def find_report_id():
 
 # %%
 report_id = find_report_id()
-current_parts = call_report_api(report_id, "getDefinition?format=PBIR")["definition"]["parts"]
-call_report_api(report_id, "updateDefinition", {"definition": {"parts": report_parts(current_parts)}})
+update_report_parts(report_id, report_parts(get_report_parts(report_id)))
 print(f"{REPORT_NAME}: {len(PAGES)} pages, {sum(len(visuals) for _, _, visuals in PAGES)} visuals published")
